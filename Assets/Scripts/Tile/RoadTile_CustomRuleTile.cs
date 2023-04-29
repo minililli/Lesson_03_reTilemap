@@ -8,25 +8,20 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Tilemaps;
 
-[Flags]
-public enum TileDirection : byte
-{
-    None = 0,
-    North = 1,
-    East = 2,
-    West = 4,
-    South = 8,
-    All = North | East | West | South
-}
 public class RoadTile_CustomRuleTile : Tile
 {
-    Sprite[] sprites;
-
-
-    private void OnEnable()
+    [Flags]
+    public enum TileDirection : byte
     {
-        Vector2 screenPos = Mouse.current.position.ReadValue();
+        None = 0,
+        North = 1,  //0000_0001
+        East = 2,   //0000_0010
+        West = 4,   //0000_0100
+        South = 8,  //0000_1000
+        All = North | East | West | South   //0000_1111
     }
+
+    public Sprite[] sprites;
     bool HasThisTile(ITilemap tilemap, Vector3Int position)
     {
         return tilemap.GetTile(position) == this;
@@ -62,10 +57,12 @@ public class RoadTile_CustomRuleTile : Tile
         TileDirection mask = TileDirection.None;
         mask |= HasThisTile(tilemap, position + new Vector3Int(0, 1, 0)) ? TileDirection.North : 0;
         mask |= HasThisTile(tilemap, position + new Vector3Int(1, 0, 0)) ? TileDirection.East : 0;
+        mask |= HasThisTile(tilemap, position + new Vector3Int(0, -1, 0)) ? TileDirection.South : 0;
+        mask |= HasThisTile(tilemap, position + new Vector3Int(-1, 0, 0)) ? TileDirection.West : 0;
 
         int index = GetIndex(mask);
         if (index > -1)
-        {
+        {   
             tileData.sprite = sprites[index];
             tileData.color = Color.white;
             Matrix4x4 m = tileData.transform;
@@ -96,18 +93,17 @@ public class RoadTile_CustomRuleTile : Tile
                 index = 0;
                 break;
 
+            case TileDirection.South | TileDirection.West:
             case TileDirection.North | TileDirection.East:
             case TileDirection.North | TileDirection.West:
             case TileDirection.South | TileDirection.East:
-            case TileDirection.South | TileDirection.West:
-
                 index = 1;
                 break;
 
-            case TileDirection.North | TileDirection.South | TileDirection.West:
-            case TileDirection.North | TileDirection.South | TileDirection.East:
-            case TileDirection.East | TileDirection.West | TileDirection.North:
-            case TileDirection.East | TileDirection.West | TileDirection.South:
+            case TileDirection.All & ~TileDirection.North:
+            case TileDirection.All & ~TileDirection.South:
+            case TileDirection.All & ~TileDirection.West:
+            case TileDirection.All & ~TileDirection.East:
 
                 index = 2;
                 break;
@@ -127,33 +123,33 @@ public class RoadTile_CustomRuleTile : Tile
         {
             case TileDirection.East:
             case TileDirection.West:
-            case TileDirection.East | TileDirection.West:
+            case TileDirection.East | TileDirection.West:               // ¤Ñ ¡æ ¤Ó
 
-            case TileDirection.South | TileDirection.East:
+            case TileDirection.North | TileDirection.West:              // ¤¡ ¡æ ¡¹   
 
-            case TileDirection.North | TileDirection.South | TileDirection.West:
+            case TileDirection.All & ~TileDirection.West:    // ¤Ç ¡æ ¤¿
 
-                rotate = Quaternion.Euler(0, 0, -90.0f);
+                rotate = Quaternion.Euler(0, 0, -90);
                 break;
 
-            case TileDirection.North | TileDirection.East:
+            case TileDirection.North | TileDirection.East:              //¡¸ ¡æ ¤¤
 
-            case TileDirection.East | TileDirection.West | TileDirection.South:
-                rotate = Quaternion.Euler(0, 0, -180.0f);
+            case TileDirection.All & ~ TileDirection.North: //¤¿ ¡æ ¤Ì
+                rotate = Quaternion.Euler(0, 0, -180);
                 break;
 
-            case TileDirection.North | TileDirection.West:
+            case TileDirection.South | TileDirection.East:              //¤¤ ¡æ ¡¸
 
-            case TileDirection.North | TileDirection.South | TileDirection.East:
-
-                rotate = Quaternion.Euler(0, 0, -270.0f);
+            case TileDirection.All & ~TileDirection.East:    //¤Ì ¡æ ¤Ã
+                    
+                rotate = Quaternion.Euler(0, 0, -270);
                 break;
         }
         return rotate;
     }
 
 #if UNITY_EDITOR
-    [MenuItem("Assets/create/2D/Tiles/RoadTile")]
+    [MenuItem("Assets/Create/2D/Tiles/RoadTile")]
     public static void CreateRoadTile()
     {
         string path = EditorUtility.SaveFilePanelInProject("Save Road Tile",     //Á¦¸ñ

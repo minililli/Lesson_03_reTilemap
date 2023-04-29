@@ -6,14 +6,14 @@ using UnityEngine.InputSystem;
 
 public class Test_Base : MonoBehaviour
 {
-    PlayerInputActions inputActions;
+    protected PlayerInputActions inputActions;
 
     private void Awake()
     {
         inputActions = new PlayerInputActions();
     }
 
-    private void OnEnable()
+    protected virtual void OnEnable()
     {
         inputActions.Test.Enable();
         inputActions.Test.Test1.performed += Test1;
@@ -23,7 +23,7 @@ public class Test_Base : MonoBehaviour
         inputActions.Test.Test5.performed += Test5;
     }
 
-    private void OnDisable()
+    protected virtual void OnDisable()
     {
         inputActions.Test.Test5.performed -= Test5;
         inputActions.Test.Test4.performed -= Test4;
